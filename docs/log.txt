@@ -1,0 +1,6 @@
+2014-12-20
+==========
+
+I'm trying a new approach here by putting the main component into a subdirectory ("lib").
+
+The reason is that a project wanting to use a library as a git submodule should not inherit that library's installation/uninstallation targets, since that code might conflict with its own (which is what just happened between the GUIGLCanvas and the GUICanvas modules, as both CMakeLists.txt files were based on the same template).

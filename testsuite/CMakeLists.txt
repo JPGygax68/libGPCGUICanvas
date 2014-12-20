@@ -1,0 +1,1 @@
+add_library(libGPCGUICanvas_Tests INTERFACE)
