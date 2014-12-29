@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.0)
 
 # Project name
 project(libGPCGUICanvas)
@@ -9,4 +9,5 @@ set(VERSION_MINOR 0)
 set(VERSION_PATCH 1)
 
 add_subdirectory(lib)
+
 add_subdirectory(testsuite)

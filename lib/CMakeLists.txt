@@ -1,6 +1,7 @@
+
 add_library(libGPCGUICanvas INTERFACE)
-target_include_directories(libGPCGUICanvas BEFORE 
-  INTERFACE
-    $<BUILD_INTERFACE:"${CMAKE_CURRENT_SOURCE_DIR}/include">
-    $<INSTALL_INTERFACE:"include">
-  )
+
+target_include_directories(libGPCGUICanvas INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
