@@ -22,7 +22,7 @@ namespace gpc {
 
             typedef std::function<display_handle_t(int, int)> display_creator_fn_t;
 
-            CanvasTestSuite(display_creator_fn_t dc) :
+            CanvasTestsuite(display_creator_fn_t dc) :
                 display_creator(dc) 
             {
             }
@@ -45,8 +45,6 @@ namespace gpc {
 
         private:
             display_creator_fn_t    display_creator;
-
-            static auto cout = std::cout;
         };
 
     } // ns gui
