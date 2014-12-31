@@ -17,21 +17,27 @@ namespace gpc {
 
     namespace gui {
     
-        namespace {
+        template <
+            class Canvas,                   // CanvasBackend implementation
+            typename DisplayHandle,         // type returned by display creator function
+            class Harness
+        >
+        class CanvasTestSuite {
+        public:
 
-            template <
-                class       Canvas,
-                typename    DisplayHandle,
-                class       Harness
-            >
+            typedef Canvas                                      canvas_t;
+            typedef DisplayHandle                               display_t;
+            typedef Harness                                     harness_t;
+            typedef std::pair<display_t, canvas_t*>             context_t;
+            typedef std::function<void(display_t, canvas_t*)>   init_fn_t;
+            typedef std::function<void(display_t, canvas_t*)>   cleanup_fn_t;
+            typedef std::function<void(display_t, canvas_t*)>   draw_fn_t;
+
             class TestCase {
             public:
 
-                typedef Canvas              canvas_t;
-                typedef DisplayHandle       display_t;
-
-                TestCase(Harness *harness_, const std::string &intro_msg_, const std::string &check_quest_):
-                    harness(harness_), intro_msg(intro_msg_), check_quest(check_quest_) {}
+                TestCase(CanvasTestSuite *suite_, Harness *harness_) :
+                    suite(suite_), harness(harness_) {}
 
                 virtual void setup() = 0;
 
@@ -41,85 +47,54 @@ namespace gpc {
                 {
                     using namespace std;
 
-                    cout << endl << intro_msg << endl;
+                    cout << endl << intro_message() << endl;
                     cout << "Press ENTER to start test" << endl;
                     wait_for_return();
 
+                    context_t ctx = harness->create_window(500, 400, init_display, cleanup_display, draw_content);
 
-                    std::this_thread::sleep_for( std::chrono::milliseconds { 5000 } );
+                    harness->present_window(ctx.first, ctx.second, draw_content);
+
+                    std::this_thread::sleep_for(std::chrono::milliseconds { 5000 });
+
+                    return check_if_correct();
                 }
 
             protected:
 
-                virtual void init_display(display_t display, canvas_t *canvas) = 0;
+                // Standard implementation of the output checking function
+                virtual bool check_if_correct()
+                {
+                    cout << endl << checking_question() << endl;
+                    cout << "Was the output correct ? (y/n) " << endl;
+                    std::string answer;
+                    cin >> answer;
+                    return answer == "y" || answer == "Y";
+                }
 
-                virtual void cleanup_display(display_t display, canvas_t *canvas) = 0;
+                virtual auto intro_message() -> std::string = 0;
+
+                virtual auto checking_question() -> std::string = 0;
+
+                virtual void init_display(display_t display, canvas_t *canvas) {}
+
+                virtual void cleanup_display(display_t display, canvas_t *canvas) {}
+
+                virtual void draw_content(display_t display, canvas_t *canvas) = 0;
 
             private:
 
                 void wait_for_return() { std::cin.ignore(200, '\n'); }
 
+                CanvasTestSuite     *suite;
                 Harness             *harness;
-                const std::string   intro_msg;
-                const std::string   check_quest;
             };
-        }
+        
+            class Test_fillrect: public TestCase {
+            public:
 
-        template <
-            class Canvas,                   // CanvasBackend implementation
-            typename DisplayHandle,         // type returned by display creator function
-            class Harness
-        >
-        class CanvasTestSuite {
-        public:
-
-            typedef Canvas canvas_t;
-            typedef DisplayHandle display_t;
-
-            typedef std::pair<display_t, canvas_t*> context_t;
-            typedef std::function<void(display_t, canvas_t*)> init_fn_t;
-            typedef std::function<void(display_t, canvas_t*)> cleanup_fn_t;
-            typedef std::function<void(display_t, canvas_t*)> draw_fn_t;
-
-            CanvasTestSuite()
-            {
-                harness = new Harness();
-            }
-
-            ~CanvasTestSuite()
-            {
-                delete harness;
-            }
-
-            void update_canvas_size(int w, int h)
-            {
-                //canvas_t::
-            }
-
-            bool run_all_tests()
-            {
-                init();
-
-                size_t total_count = 0, ok_count = 0;
-
-                total_count++;
-                if (test_fillrect()) ok_count ++;
-
-                total_count++;
-                if (test_image()) ok_count++;
-
-                total_count++;
-                if (test_text()) ok_count++;
-
-                return ok_count == total_count;
-            }
-
-            bool test_fillrect()
-            {
-                // TODO: display explanatory message to user
-
-                auto context = create_window(0, 0, nullptr, [&](display_t disp, canvas_t *canvas) {
-
+                void draw_content(display_t display, canvas_t *canvas) override
+                {
                     int x = 50, y = 50;
 
                     canvas->fill_rect(50, y, 150, 150, canvas->rgb_to_native({ 1, 0, 0 }));
@@ -127,26 +102,29 @@ namespace gpc {
                     y += 150 + 10;
                     canvas->fill_rect(50, y, 150, 150, canvas->rgb_to_native({ 0, 0, 1 }));
                     canvas->fill_rect(50 + 150 + 10, y, 150, 150, canvas->rgb_to_native({ 1, 1, 1 }));
-                });
+                }
 
-                // TODO: wait 5 seconds
+            };
+           
+            class Test_image_drawing : public TestCase {
+            public:
 
-                // TODO: ask user about result
+                static const int WIDTH = 170, HEIGHT = 130;
 
-                return false;
-            }
+                void init_display(display_t display, canvas_t *canvas) override
+                {
+                    auto image_pixels = makeColorInterpolatedRectangle(WIDTH, HEIGHT, { { { 1, 0, 0, 1 }, { 0, 1, 0, 1 }, { 0, 0, 1, 1 }, { 1, 1, 1, 1 } } });
 
-            bool test_image()
-            {
-                // TODO: display explanatory message to user
+                    image_handle = canvas->register_rgba_image(WIDTH, HEIGHT, &image_pixels[0]);
+                }
 
-                init_fn_t init_fn = [&, this](display_t disp, canvas_t *canvas) {
+                void cleanup_display(display_t display, canvas_t *canvas) override
+                {
+                    // TODO: dispose of ("unregister") image
+                }
 
-                    test_image_handle = canvas->register_rgba_image(170, 130, &test_image_pixels[0]);
-                };
-
-                draw_fn_t draw_fn = [&](display_t disp, canvas_t *canvas) {
-
+                virtual void draw_content(display_t display, canvas_t *canvas) override
+                {
                     static const int SEPARATION = 10;
 
                     int x = 50, y = 50, w, h;
@@ -165,32 +143,58 @@ namespace gpc {
                     // Image with offset
                     x += w + 20;
                     canvas->draw_image(x, y, w, h, test_image_handle, 20, 20);
-                };
+                }
 
-                auto context = create_window(0, 0, init_fn, draw_fn);
+            private:
+                static auto
+                makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<RGBAFloat, 4> &corner_colors)
+                    -> std::vector<RGBA32>
+                {
+                    std::vector<RGBA32> image(width * height);
 
-                present_window(context.first, context.second, draw_fn);
+                    auto it = image.begin();
+                    for (auto y = 0U; y < height; y++) {
+                        for (auto x = 0U; x < width; x++) {
+                            RGBAFloat top = interpolate(corner_colors[0], corner_colors[1], float(x) / float(width));
+                            RGBAFloat bottom = interpolate(corner_colors[2], corner_colors[3], float(x) / float(width));
+                            RGBAFloat color = interpolate(top, bottom, float(y) / float(height));
+                            *it = fromFloat(color);
+                            //*it = { {255, 0, 0, 255} };
+                            it++;
+                        }
+                    }
 
-                // TODO: wait 5 seconds
+                    return image;
+                }
 
-                // TODO: ask user about result
+                typename canvas_t::image_handle_t image_handle;
+            };
 
-                return false;
-            }
+            class Test_render_text : public TestCase {
+            public:
 
-            bool test_text()
-            {
-                // TODO: display explanatory message to user
-                canvas_t::font_handle_t font;
+                void init_display(display_t display, canvas_t *canvas) override
+                {
+                    static char liberations_sans_data[] = {
+                        #include "LiberationSans-Regular-20.rft.h"
+                    };
 
-                auto init_fn = [&](display_t disp, canvas_t *canvas) {
-                
-                    // TODO: register font
+                    std::string data_string(liberations_sans_data, liberations_sans_data + sizeof(liberations_sans_data));
+                    std::stringstream sstr(data_string);
+                    cereal::BinaryInputArchive ar(sstr);
+
+                    ar >> rfont;
+
                     font = canvas->register_font(rfont);
+                }
 
-                };
-                auto draw_fn = [&](display_t disp, canvas_t *canvas) {
+                void cleanup_display(display_t display, canvas_t *canvas) override
+                {
+                    // TODO: dispose of ("unregister") font
+                }
 
+                virtual void draw_content(display_t display, canvas_t *canvas) override
+                {
                     int x = 50, y = 50;
 
                     // Ascent (estimated) = 15; TODO: correct for top-down, but for bottom-up, descent should be used
@@ -202,74 +206,44 @@ namespace gpc {
                     canvas->set_clipping_rect(x + 5, y + 3, 100, 20 - 3 - 3);
                     canvas->draw_text(font, x, y + 15, "Clipping clipping clipping", 26);
                     canvas->cancel_clipping();
-                };
+                }
 
-                auto context = create_window(0, 0, init_fn, draw_fn);
+            private:
+                gpc::fonts::RasterizedFont rfont;
+                typename canvas_t::font_handle_t font;
+            };
 
-                present_window(context.first, context.second, draw_fn);
+        public:
 
-                // TODO: wait 5 seconds
+            CanvasTestSuite()
+            {
+                harness = new Harness();
+            }
 
-                // TODO: ask user about result
+            ~CanvasTestSuite()
+            {
+                delete harness;
+            }
 
-                return false;
+            void update_canvas_size(int w, int h)
+            {
+                //canvas_t::
+            }
+
+            bool run_all_tests()
+            {
+                harness->init();
+
+                size_t total_count = 0, ok_count = 0;
+
+                // TODO
+
+                return ok_count == total_count;
             }
 
         private:
 
-            // TODO: move this into some toolchest library in the gpc::gui namespace ?
-
-            static auto 
-            makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<RGBAFloat, 4> &corner_colors)
-                -> std::vector<RGBA32>
-            {
-                std::vector<RGBA32> image(width * height);
-
-                auto it = image.begin();
-                for (auto y = 0U; y < height; y++) {
-                    for (auto x = 0U; x < width; x++) {
-                        RGBAFloat top = interpolate(corner_colors[0], corner_colors[1], float(x) / float(width));
-                        RGBAFloat bottom = interpolate(corner_colors[2], corner_colors[3], float(x) / float(width));
-                        RGBAFloat color = interpolate(top, bottom, float(y) / float(height));
-                        *it = fromFloat(color);
-                        //*it = { {255, 0, 0, 255} };
-                        it++;
-                    }
-                }
-
-                return image;
-            }
-
-            void init()
-            {
-                static char liberations_sans_data[] = {
-                    #include "LiberationSans-Regular-20.rft.h"
-                };
-
-                std::string data_string(liberations_sans_data, liberations_sans_data + sizeof(liberations_sans_data));
-                std::stringstream sstr(data_string);
-                cereal::BinaryInputArchive ar(sstr);
-                ar >> rfont;
-
-                test_image_pixels = makeColorInterpolatedRectangle(170, 130, { { {1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}, {1, 1, 1, 1} } });
-            }
-
-            auto create_window(int w, int h, init_fn_t init_fn, draw_fn_t draw_fn) 
-                -> context_t
-            {
-                context_t ctx = harness->create_window(w, h, init_fn, draw_fn);
-                return ctx;
-            }
-
-            void present_window(display_t disp, canvas_t *canvas, draw_fn_t draw_fn)
-            {
-                harness->present_window(disp, canvas, draw_fn);
-            }
-
             Harness *harness;
-            gpc::fonts::RasterizedFont rfont;
-            std::vector<gpc::gui::RGBA32> test_image_pixels;
-            typename canvas_t::image_handle_t test_image_handle;
         };
 
     } // ns gui
