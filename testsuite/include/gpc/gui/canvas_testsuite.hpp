@@ -20,14 +20,14 @@ namespace gpc {
         template <
             class Canvas,                   // CanvasBackend implementation
             typename DisplayHandle,         // type returned by display creator function
-            class Harness
+            class DisplayDriver
         >
         class CanvasTestSuite {
         public:
 
             typedef Canvas                                      canvas_t;
             typedef DisplayHandle                               display_t;
-            typedef Harness                                     harness_t;
+            typedef DisplayDriver                               display_driver_t;
             typedef std::pair<display_t, canvas_t*>             context_t;
             typedef std::function<void(display_t, canvas_t*)>   init_fn_t;
             typedef std::function<void(display_t, canvas_t*)>   cleanup_fn_t;
@@ -36,12 +36,13 @@ namespace gpc {
             class TestCase {
             public:
 
-                TestCase(CanvasTestSuite *suite_, Harness *harness_) :
-                    suite(suite_), harness(harness_) {}
+                TestCase() :  suite(nullptr), display_driver(nullptr) {}
 
-                virtual void setup() = 0;
-
-                virtual void cleanup() = 0;
+                void init(CanvasTestSuite *suite_, DisplayDriver *driver_) 
+                {
+                    suite = suite_;
+                    display_driver = driver_;
+                }
 
                 bool run()
                 {
@@ -51,11 +52,16 @@ namespace gpc {
                     cout << "Press ENTER to start test" << endl;
                     wait_for_return();
 
-                    context_t ctx = harness->create_window(500, 400, init_display, cleanup_display, draw_content);
+                    typename init_fn_t init_fn = [&](display_t disp, canvas_t *canvas) { init_display(disp, canvas); };
+                    typename draw_fn_t draw_fn = [&](display_t disp, canvas_t *canvas) { draw_content(disp, canvas); };
 
-                    harness->present_window(ctx.first, ctx.second, draw_content);
+                    context_t ctx = display_driver->create_window(500, 400, init_fn, draw_fn);
 
-                    std::this_thread::sleep_for(std::chrono::milliseconds { 5000 });
+                    display_driver->present_window(ctx.first, ctx.second, draw_fn);
+
+                    //std::this_thread::sleep_for(std::chrono::milliseconds { 5000 });
+
+                    display_driver->destroy_window(ctx.first);
 
                     return check_if_correct();
                 }
@@ -65,16 +71,15 @@ namespace gpc {
                 // Standard implementation of the output checking function
                 virtual bool check_if_correct()
                 {
-                    cout << endl << checking_question() << endl;
-                    cout << "Was the output correct ? (y/n) " << endl;
+                    cout << std::endl << checking_question() << " " << std::endl;
                     std::string answer;
-                    cin >> answer;
+                    std::cin >> answer;
                     return answer == "y" || answer == "Y";
                 }
 
-                virtual auto intro_message() -> std::string = 0;
+                virtual auto intro_message() const -> std::string = 0;
 
-                virtual auto checking_question() -> std::string = 0;
+                virtual auto checking_question() const -> std::string = 0;
 
                 virtual void init_display(display_t display, canvas_t *canvas) {}
 
@@ -87,11 +92,20 @@ namespace gpc {
                 void wait_for_return() { std::cin.ignore(200, '\n'); }
 
                 CanvasTestSuite     *suite;
-                Harness             *harness;
+                DisplayDriver             *display_driver;
             };
         
-            class Test_fillrect: public TestCase {
+            class Test_fill_rect : public TestCase {
             public:
+
+                auto intro_message() const -> std::string override { 
+                    return "This will display 4 squares in red, green, blue, and white; each 150x150 pixels in size, arranged in a square "
+                        "with 10 pixels of separation between the two rows and columns."; 
+                }
+
+                auto checking_question() const -> std::string override { 
+                    return "Did you see the 4 squares? (y/n)"; 
+                }
 
                 void draw_content(display_t display, canvas_t *canvas) override
                 {
@@ -106,10 +120,24 @@ namespace gpc {
 
             };
            
-            class Test_image_drawing : public TestCase {
+            class Test_draw_image : public TestCase {
             public:
 
                 static const int WIDTH = 170, HEIGHT = 130;
+
+                auto intro_message() const -> std::string override {
+
+                    return "This will display a single image in multiple ways:\n"
+                        "- display once, as-is\n"
+                        "- repeated both horizontally and vertically"
+                        "- clipped\n"
+                        "- with an offset (i.e. leaving out image pixels from the left and the top";
+                }
+
+                auto checking_question() const -> std::string override {
+
+                    return "Did you see the images as described? (y/n)";
+                }
 
                 void init_display(display_t display, canvas_t *canvas) override
                 {
@@ -130,19 +158,19 @@ namespace gpc {
                     int x = 50, y = 50, w, h;
 
                     // Single image
-                    canvas->draw_image(x, y, 170, 130, test_image_handle);
+                    canvas->draw_image(x, y, 170, 130, image_handle);
                     x += 170 + SEPARATION;
                     // Repeated image
                     w = 2 * 170 + 8, h = 2 * 130 + 5;
-                    canvas->draw_image(x, y, w, h, test_image_handle);
+                    canvas->draw_image(x, y, w, h, image_handle);
                     // Repeated, with clipping
                     x += w + SEPARATION;
                     canvas->set_clipping_rect(x + 20, y + 20, w - 40, h - 40);
-                    canvas->draw_image(x, y, w, h, test_image_handle);
+                    canvas->draw_image(x, y, w, h, image_handle);
                     canvas->cancel_clipping();
                     // Image with offset
                     x += w + 20;
-                    canvas->draw_image(x, y, w, h, test_image_handle, 20, 20);
+                    canvas->draw_image(x, y, w, h, image_handle, 20, 20);
                 }
 
             private:
@@ -170,8 +198,19 @@ namespace gpc {
                 typename canvas_t::image_handle_t image_handle;
             };
 
-            class Test_render_text : public TestCase {
+            class Test_draw_text : public TestCase {
             public:
+
+                auto intro_message() const -> std::string override {
+
+                    return "This will display two text strings:\n"
+                        "- the first will be display just as-is\n"
+                        "- the second should be clipped on all 4 sides";
+                }
+
+                auto checking_question() const -> std::string override {
+                    return "Did you see the text, both as-is and clipped? (y/n)";
+                }
 
                 void init_display(display_t display, canvas_t *canvas) override
                 {
@@ -217,12 +256,16 @@ namespace gpc {
 
             CanvasTestSuite()
             {
-                harness = new Harness();
+                display_driver = new DisplayDriver();
+
+                tests.push_back(new Test_fill_rect ());
+                tests.push_back(new Test_draw_image());
+                tests.push_back(new Test_draw_text ());
             }
 
             ~CanvasTestSuite()
             {
-                delete harness;
+                delete display_driver;
             }
 
             void update_canvas_size(int w, int h)
@@ -232,18 +275,23 @@ namespace gpc {
 
             bool run_all_tests()
             {
-                harness->init();
+                display_driver->init();
+
+                for(auto test: tests) { test->init(this, display_driver); }
 
                 size_t total_count = 0, ok_count = 0;
-
-                // TODO
+                for (auto test: tests) {
+                    total_count ++;
+                    if (test->run()) ok_count ++;
+                }
 
                 return ok_count == total_count;
             }
 
         private:
 
-            Harness *harness;
+            DisplayDriver *display_driver;
+            std::vector<TestCase*> tests;
         };
 
     } // ns gui
