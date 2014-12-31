@@ -2,6 +2,8 @@
 
 #include <functional>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include <boost/concept_check.hpp>
 #include <cereal/archives/binary.hpp>
@@ -15,15 +17,63 @@ namespace gpc {
 
     namespace gui {
     
+        namespace {
+
+            template <
+                class       Canvas,
+                typename    DisplayHandle,
+                class       Harness
+            >
+            class TestCase {
+            public:
+
+                typedef Canvas              canvas_t;
+                typedef DisplayHandle       display_t;
+
+                TestCase(Harness *harness_, const std::string &intro_msg_, const std::string &check_quest_):
+                    harness(harness_), intro_msg(intro_msg_), check_quest(check_quest_) {}
+
+                virtual void setup() = 0;
+
+                virtual void cleanup() = 0;
+
+                bool run()
+                {
+                    using namespace std;
+
+                    cout << endl << intro_msg << endl;
+                    cout << "Press ENTER to start test" << endl;
+                    wait_for_return();
+
+
+                    std::this_thread::sleep_for( std::chrono::milliseconds { 5000 } );
+                }
+
+            protected:
+
+                virtual void init_display(display_t display, canvas_t *canvas) = 0;
+
+                virtual void cleanup_display(display_t display, canvas_t *canvas) = 0;
+
+            private:
+
+                void wait_for_return() { std::cin.ignore(200, '\n'); }
+
+                Harness             *harness;
+                const std::string   intro_msg;
+                const std::string   check_quest;
+            };
+        }
+
         template <
-            class BackendImpl,              // CanvasBackend implementation
+            class Canvas,                   // CanvasBackend implementation
             typename DisplayHandle,         // type returned by display creator function
             class Harness
         >
         class CanvasTestSuite {
         public:
 
-            typedef BackendImpl canvas_t;
+            typedef Canvas canvas_t;
             typedef DisplayHandle display_t;
 
             typedef std::pair<display_t, canvas_t*> context_t;
@@ -201,7 +251,7 @@ namespace gpc {
                 cereal::BinaryInputArchive ar(sstr);
                 ar >> rfont;
 
-                test_image_pixels = makeColorInterpolatedRectangle(170, 130, { { { 1, 0, 0, 1 }, { 0, 1, 0, 1 }, { 0, 0, 1, 1 }, { 1, 1, 1, 1 } } });
+                test_image_pixels = makeColorInterpolatedRectangle(170, 130, { { {1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}, {1, 1, 1, 1} } });
             }
 
             auto create_window(int w, int h, init_fn_t init_fn, draw_fn_t draw_fn) 
