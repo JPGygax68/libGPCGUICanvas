@@ -17,24 +17,28 @@ namespace gpc {
     
         template <
             class BackendImpl,              // CanvasBackend implementation
-            typename DisplayHandle          // type returned by display creator function
+            typename DisplayHandle,         // type returned by display creator function
+            class Harness
         >
-        class CanvasTestsuite {
+        class CanvasTestSuite {
         public:
 
             typedef BackendImpl canvas_t;
             typedef DisplayHandle display_t;
 
             typedef std::pair<display_t, canvas_t*> context_t;
+            typedef std::function<void(display_t, canvas_t*)> init_fn_t;
+            typedef std::function<void(display_t, canvas_t*)> cleanup_fn_t;
+            typedef std::function<void(display_t, canvas_t*)> draw_fn_t;
 
-            typedef std::function<void(display_t, canvas_t)> draw_fn_t;
-
-            typedef std::function<context_t(int, int, draw_fn_t)> display_creator_fn_t;
-            typedef std::function<void(display_t)> display_destructor_fn_t;
-
-            CanvasTestsuite(display_creator_fn_t dc, display_destructor_fn_t dd) :
-                display_creator(dc), display_destructor(dd)
+            CanvasTestSuite()
             {
+                harness = new Harness();
+            }
+
+            ~CanvasTestSuite()
+            {
+                delete harness;
             }
 
             void update_canvas_size(int w, int h)
@@ -64,7 +68,7 @@ namespace gpc {
             {
                 // TODO: display explanatory message to user
 
-                auto display = create_display(0, 0, [&](display_t disp, canvas_t &canvas) {
+                auto context = create_window(0, 0, nullptr, [&](display_t disp, canvas_t &canvas) {
 
                     int x = 50, y = 50;
 
@@ -86,25 +90,33 @@ namespace gpc {
             {
                 // TODO: display explanatory message to user
 
-                auto display = create_display(0, 0, [&](display_t disp, canvas_t &canvas) {
+                auto context = create_window(0, 0, [&, this](display_t disp, canvas_t *canvas) {
+
+                    test_image_handle = canvas->register_rgba_image(170, 130, &test_image_pixels[0]);
+
+                }, [&](display_t disp, canvas_t *canvas) {
+
+                    static const int SEPARATION = 10;
 
                     int x = 50, y = 50, w, h;
 
                     // Single image
-                    canvas.draw_image(x, y, 170, 130, test_image_handle);
+                    canvas->draw_image(x, y, 170, 130, test_image_handle);
                     x += 170 + SEPARATION;
                     // Repeated image
                     w = 2 * 170 + 8, h = 2 * 130 + 5;
-                    canvas.draw_image(x, y, w, h, test_image_handle);
+                    canvas->draw_image(x, y, w, h, test_image_handle);
                     // Repeated, with clipping
                     x += w + SEPARATION;
-                    canvas.set_clipping_rect(x + 20, y + 20, w - 40, h - 40);
-                    canvas.draw_image(x, y, w, h, test_image_handle);
-                    canvas.cancel_clipping();
+                    canvas->set_clipping_rect(x + 20, y + 20, w - 40, h - 40);
+                    canvas->draw_image(x, y, w, h, test_image_handle);
+                    canvas->cancel_clipping();
                     // Image with offset
                     x += w + 20;
-                    canvas.draw_image(x, y, w, h, test_image_handle, 20, 20);
+                    canvas->draw_image(x, y, w, h, test_image_handle, 20, 20);
                 });
+
+                present_display(context.first);
 
                 // TODO: wait 5 seconds
 
@@ -117,7 +129,9 @@ namespace gpc {
             {
                 // TODO: display explanatory message to user
 
-                auto display = create_display(0, 0, [&](display_t disp, canvas_t &canvas) {
+                auto context = create_window(0, 0, [&](display_t disp, canvas_t &canvas) {
+                
+                }, [&](display_t disp, canvas_t &canvas) {
 
                     int x = 50, y = 50;
 
@@ -140,6 +154,8 @@ namespace gpc {
             }
 
         private:
+
+            // TODO: move this into some toolchest library in the gpc::gui namespace ?
 
             static auto 
             makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<RGBAFloat, 4> &corner_colors)
@@ -172,19 +188,27 @@ namespace gpc {
                 std::stringstream sstr(data_string);
                 cereal::BinaryInputArchive ar(sstr);
                 ar >> rfont;
+
+                test_image_pixels = makeColorInterpolatedRectangle(170, 130, { { { 1, 0, 0, 1 }, { 0, 1, 0, 1 }, { 0, 0, 1, 1 }, { 1, 1, 1, 1 } } });
             }
 
-            auto create_display(int w, int h, draw_fn_t draw_fn) 
+            auto create_window(int w, int h, init_fn_t init_fn, draw_fn_t draw_fn) 
                 -> context_t
             {
-                context_t ctx = display_creator(w, h, draw_fn);
+                context_t ctx = harness->create_window(w, h, init_fn, draw_fn);
                 canvas.init();
                 return ctx;
             }
 
-            display_creator_fn_t    display_creator;
-            display_destructor_fn_t display_destructor;
+            void present_display(display_t disp)
+            {
+                harness->present_display(disp);
+            }
+
+            Harness *harness;
             gpc::fonts::RasterizedFont rfont;
+            std::vector<gpc::gui::RGBA32> test_image_pixels;
+            typename canvas_t::image_handle_t test_image_handle;
         };
 
     } // ns gui
