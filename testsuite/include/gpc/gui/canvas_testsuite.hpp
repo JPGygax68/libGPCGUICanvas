@@ -68,15 +68,15 @@ namespace gpc {
             {
                 // TODO: display explanatory message to user
 
-                auto context = create_window(0, 0, nullptr, [&](display_t disp, canvas_t &canvas) {
+                auto context = create_window(0, 0, nullptr, [&](display_t disp, canvas_t *canvas) {
 
                     int x = 50, y = 50;
 
-                    canvas.fill_rect(50, y, 150, 150, canvas.rgb_to_native({ 1, 0, 0 }));
-                    canvas.fill_rect(50 + 150 + 10, y, 150, 150, canvas.rgb_to_native({ 0, 1, 0 }));
+                    canvas->fill_rect(50, y, 150, 150, canvas->rgb_to_native({ 1, 0, 0 }));
+                    canvas->fill_rect(50 + 150 + 10, y, 150, 150, canvas->rgb_to_native({ 0, 1, 0 }));
                     y += 150 + 10;
-                    canvas.fill_rect(50, y, 150, 150, canvas.rgb_to_native({ 0, 0, 1 }));
-                    canvas.fill_rect(50 + 150 + 10, y, 150, 150, canvas.rgb_to_native({ 1, 1, 1 }));
+                    canvas->fill_rect(50, y, 150, 150, canvas->rgb_to_native({ 0, 0, 1 }));
+                    canvas->fill_rect(50 + 150 + 10, y, 150, 150, canvas->rgb_to_native({ 1, 1, 1 }));
                 });
 
                 // TODO: wait 5 seconds
@@ -90,11 +90,12 @@ namespace gpc {
             {
                 // TODO: display explanatory message to user
 
-                auto context = create_window(0, 0, [&, this](display_t disp, canvas_t *canvas) {
+                init_fn_t init_fn = [&, this](display_t disp, canvas_t *canvas) {
 
                     test_image_handle = canvas->register_rgba_image(170, 130, &test_image_pixels[0]);
+                };
 
-                }, [&](display_t disp, canvas_t *canvas) {
+                draw_fn_t draw_fn = [&](display_t disp, canvas_t *canvas) {
 
                     static const int SEPARATION = 10;
 
@@ -114,9 +115,11 @@ namespace gpc {
                     // Image with offset
                     x += w + 20;
                     canvas->draw_image(x, y, w, h, test_image_handle, 20, 20);
-                });
+                };
 
-                present_display(context.first);
+                auto context = create_window(0, 0, init_fn, draw_fn);
+
+                present_window(context.first, context.second, draw_fn);
 
                 // TODO: wait 5 seconds
 
@@ -128,23 +131,32 @@ namespace gpc {
             bool test_text()
             {
                 // TODO: display explanatory message to user
+                canvas_t::font_handle_t font;
 
-                auto context = create_window(0, 0, [&](display_t disp, canvas_t &canvas) {
+                auto init_fn = [&](display_t disp, canvas_t *canvas) {
                 
-                }, [&](display_t disp, canvas_t &canvas) {
+                    // TODO: register font
+                    font = canvas->register_font(rfont);
+
+                };
+                auto draw_fn = [&](display_t disp, canvas_t *canvas) {
 
                     int x = 50, y = 50;
 
                     // Ascent (estimated) = 15; TODO: correct for top-down, but for bottom-up, descent should be used
-                    canvas.draw_text(my_font, x, y + 15, "ABCDEFabcdef,;", 14);
-                    canvas.fill_rect(x, y + 15 - 1, x + 150, 1, canvas.rgba_to_native({ 1, 0, 0, 0.5f }));
+                    canvas->draw_text(font, x, y + 15, "ABCDEFabcdef,;", 14);
+                    canvas->fill_rect(x, y + 15 - 1, x + 150, 1, canvas->rgba_to_native({ 1, 0, 0, 0.5f }));
                     y += 20;
                     // With clipping
                     y += 10;
-                    canvas.set_clipping_rect(x + 5, y + 3, 100, 20 - 3 - 3);
-                    canvas.draw_text(my_font, x, y + 15, "Clipping clipping clipping", 26);
-                    canvas.cancel_clipping();
-                });
+                    canvas->set_clipping_rect(x + 5, y + 3, 100, 20 - 3 - 3);
+                    canvas->draw_text(font, x, y + 15, "Clipping clipping clipping", 26);
+                    canvas->cancel_clipping();
+                };
+
+                auto context = create_window(0, 0, init_fn, draw_fn);
+
+                present_window(context.first, context.second, draw_fn);
 
                 // TODO: wait 5 seconds
 
@@ -196,13 +208,12 @@ namespace gpc {
                 -> context_t
             {
                 context_t ctx = harness->create_window(w, h, init_fn, draw_fn);
-                canvas.init();
                 return ctx;
             }
 
-            void present_display(display_t disp)
+            void present_window(display_t disp, canvas_t *canvas, draw_fn_t draw_fn)
             {
-                harness->present_display(disp);
+                harness->present_window(disp, canvas, draw_fn);
             }
 
             Harness *harness;
