@@ -7,8 +7,7 @@ namespace gpc {
         enum class HorizontalDirection { RIGHT, LEFT };
         enum class VerticalDirection { DOWN, UP };
 
-        // TODO: RGBFloat and RGBAFloat are implementation-independent and belong in
-        // the module defining the Canvas concept
+        // TODO: the color stuff should probably go into a separate header file
 
         struct RGBFloat {
             GLfloat r, g, b;
@@ -51,6 +50,7 @@ namespace gpc {
             return { { uint8_t(from.r * 255), uint8_t(from.g * 255), uint8_t(from.b * 255), uint8_t(from.a * 255) } };
         }
 
+        // TODO: use Boost concept checking to define something usable here
 
         #ifdef NOT_DEFINED
         
