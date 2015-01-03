@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_library(libGPCGUICanvasTestImage STATIC dummy.cpp include/gpc/gui/canvas/test_image_gen.hpp include/gpc/gui/fonts.hpp)
+add_library(libGPCGUICanvasTestImage STATIC dummy.cpp include/gpc/gui/canvas/test_image_gen.hpp)
 
 target_link_libraries(libGPCGUICanvasTestImage PRIVATE libGPCGUICanvas)
 
