@@ -62,7 +62,7 @@ namespace gpc {
             VerticalDirection VertAxisDir,
             typename CoordType
         >
-        class Canvas {
+        class Renderer {
         public:
             
             static const HorizontalDirection    horizontal_axis_dir;
