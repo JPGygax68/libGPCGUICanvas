@@ -26,30 +26,9 @@ namespace gpc {
             {
                 canvas = canvas_;
 
+                register_colors();
                 register_fonts();
-
                 register_test_image();
-            }
-
-            void register_fonts()
-            {
-                static char sans_reg_20[] = {
-                    #include "LiberationSans-Regular-20.rft.h"
-                };
-
-                std::string data_string(sans_reg_20, sans_reg_20 + sizeof(sans_reg_20));
-                std::stringstream sstr(data_string);
-                cereal::BinaryInputArchive ar(sstr);
-                gpc::fonts::RasterizedFont rfont;
-                ar >> rfont;
-
-                font = canvas->register_font(rfont);
-
-                // TODO: dispose of fonts
-            }
-
-            void register_image()
-            {
             }
 
             auto generate() -> std::vector<RGBA32>
@@ -61,6 +40,7 @@ namespace gpc {
                 draw_grid();
                 draw_plain_rects();
                 draw_images(200, 50);
+                render_text(50, 200);
 
                 return img;
             }
@@ -87,6 +67,31 @@ namespace gpc {
                 return image;
             }
 
+            void register_colors()
+            {
+               red = canvas->rgba_to_native({ 1, 0, 0, 1 });
+               green = canvas->rgba_to_native({ 0, 1, 0, 1 });
+               blue = canvas->rgba_to_native({ 0, 0, 1, 1 });
+               white = canvas->rgba_to_native({ 1, 1, 1, 1 });
+            }
+
+            void register_fonts()
+            {
+                static char sans_reg_20[] = {
+                    #include "LiberationSans-Regular-16.rft.h"
+                };
+
+                std::string data_string(sans_reg_20, sans_reg_20 + sizeof(sans_reg_20));
+                std::stringstream sstr(data_string);
+                cereal::BinaryInputArchive ar(sstr);
+                gpc::fonts::RasterizedFont rfont;
+                ar >> rfont;
+
+                font = canvas->register_font(rfont);
+
+                // TODO: dispose of fonts
+            }
+
             void register_test_image()
             {
                 auto pixels = makeColorInterpolatedRectangle(50, 50, { { { 1, 0, 0, 1 }, { 0, 1, 0, 1 }, { 0, 0, 1, 1 }, { 1, 1, 1, 1 } } });
@@ -105,33 +110,24 @@ namespace gpc {
                     canvas->fill_rect(0, y - LINE_WIDTH, WIDTH, LINE_WIDTH, before);
                     canvas->fill_rect(0, y, WIDTH, LINE_WIDTH, after);
                     auto label = std::to_string(y);
-                    canvas->draw_text(font, 4, y - 4, label.c_str(), label.size());
+                    canvas->render_text(font, 4, y - 4, label.c_str(), label.size());
                 }
                 // Horizontal axis
                 for (int x = 0; x <= WIDTH; x += 50) {
                     canvas->fill_rect(x - LINE_WIDTH, 0, LINE_WIDTH, HEIGHT, before);
                     canvas->fill_rect(x, 0, LINE_WIDTH, HEIGHT, after);
                     auto label = std::to_string(x);
-                    canvas->draw_text(font, x+4, 18, label.c_str(), label.size());
+                    canvas->render_text(font, x+4, 18, label.c_str(), label.size());
                 }
             }
 
             void draw_plain_rects()
             {
-                Canvas::native_color_t red   = canvas->rgba_to_native({ 1, 0, 0, 1 });
-                Canvas::native_color_t green = canvas->rgba_to_native({ 0, 1, 0, 1 });
-                Canvas::native_color_t blue  = canvas->rgba_to_native({ 0, 0, 1, 1 });
-                Canvas::native_color_t white = canvas->rgba_to_native({ 1, 1, 1, 1 });
-
                 canvas->fill_rect(50, 50, 50, 50, red);
                 canvas->fill_rect(100, 50, 50, 50, green);
                 canvas->fill_rect(50, 100, 50, 50, blue);
                 canvas->fill_rect(100, 100, 50, 50, white);
             }
-
-            Canvas *canvas;
-            typename Canvas::font_handle_t font;
-            typename Canvas::image_handle_t test_image;
 
             void draw_images(int x, int y)
             {
@@ -141,6 +137,7 @@ namespace gpc {
                 x += SEP;
                 canvas->draw_image(x, y, 75, 75, test_image); x += 75;
                 x += SEP;
+                canvas->fill_rect(x, y, 50, 50, white);
                 canvas->set_clipping_rect(x+5, y+5, 40, 40);
                 canvas->draw_image(x, y, 50, 50, test_image); x += 50;
                 canvas->cancel_clipping();
@@ -149,6 +146,23 @@ namespace gpc {
                 x += SEP;
                 canvas->draw_image(x, y, 50, 50, test_image, 20, 20); x += 50;
             }
+
+            void render_text(int x, int y)
+            {
+                static const int SEP = 25;
+
+                canvas->set_text_color(canvas->rgba_to_native({0, 0, 0, 1}));
+                canvas->render_text(font, x, y, "Some black text.", 16); x += 200;
+                canvas->set_text_color(canvas->rgba_to_native({ 0.5f, 0, 0, 1 }));
+                canvas->render_text(font, x, y, "Now some RED text.", 18); x += 200;
+                canvas->set_text_color(canvas->rgba_to_native({ 0., 0, 0, 0.5f }));
+                canvas->render_text(font, x, y, "Half-transparent text.", 21); x += 200;
+            }
+
+            Canvas *canvas;
+            typename Canvas::font_handle_t font;
+            typename Canvas::image_handle_t test_image;
+            typename Canvas::native_color_t red, green, blue, white;
         };
 
     } // ns gui

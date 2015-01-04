@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_library(libGPCGUITestImage STATIC dummy.cpp include/gpc/gui/canvas/test_image_gen.hpp)
+add_library(libGPCGUITestImage STATIC dummy.cpp include/gpc/gui/test_image_gen.hpp)
 
 target_link_libraries(libGPCGUITestImage PRIVATE libGPCGUICanvas)
 
@@ -16,8 +16,8 @@ if (NOT GPCFontRasterizer)
 endif()
 
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft
-  COMMAND GPCFontRasterizer input="${CMAKE_CURRENT_SOURCE_DIR}/LiberationSans-Regular.ttf" size=20 output="${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft"
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft
+  COMMAND GPCFontRasterizer input="${CMAKE_CURRENT_SOURCE_DIR}/LiberationSans-Regular.ttf" size=16 output="${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft"
 )
 
 if (NOT GPCBin2C)
@@ -25,12 +25,12 @@ if (NOT GPCBin2C)
 endif()
 
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft.h
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft
-  COMMAND GPCBin2C --input=${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft --output=${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft.h
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft.h
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft
+  COMMAND GPCBin2C --input=${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft --output=${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft.h
 )
 
-target_sources(libGPCGUITestImage PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft.h)
+target_sources(libGPCGUITestImage PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft.h)
 
 target_include_directories(libGPCGUITestImage PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
