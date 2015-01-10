@@ -1,3 +1,17 @@
+2015-01-07
+==========
+
+I've decided against an interactive test suite. Instead, I've created a small lib called libGPCGUITestImage, which defines a templated class that generates a test image.
+
+TODO: 
+
+- I want the test image class to do a pixel-by-pixel comparison between the test image it generates and a reference image.
+  - Note: this requires the introduction of a "screenshot" function in the Renderer concept.
+
+- There should be concept-like static checking of an implementation's interface.
+
+- The test image should be able to deal with both a bottom-up or a top-down Y axis (for now, it only handles the latter).
+
 2014-12-29
 ==========
 

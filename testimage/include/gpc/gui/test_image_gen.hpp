@@ -73,15 +73,16 @@ namespace gpc {
                green = canvas->rgba_to_native({ 0, 1, 0, 1 });
                blue = canvas->rgba_to_native({ 0, 0, 1, 1 });
                white = canvas->rgba_to_native({ 1, 1, 1, 1 });
+               grey = canvas->rgba_to_native({ 0.5f, 0.5f, 0.5f, 1});
             }
 
             void register_fonts()
             {
-                static char sans_reg_20[] = {
+                static char sans_reg_16[] = {
                     #include "LiberationSans-Regular-16.rft.h"
                 };
 
-                std::string data_string(sans_reg_20, sans_reg_20 + sizeof(sans_reg_20));
+                std::string data_string(sans_reg_16, sans_reg_16 + sizeof(sans_reg_16));
                 std::stringstream sstr(data_string);
                 cereal::BinaryInputArchive ar(sstr);
                 gpc::fonts::RasterizedFont rfont;
@@ -137,7 +138,7 @@ namespace gpc {
                 x += SEP;
                 canvas->draw_image(x, y, 75, 75, test_image); x += 75;
                 x += SEP;
-                canvas->fill_rect(x, y, 50, 50, white);
+                canvas->fill_rect(x, y, 50, 50, grey);
                 canvas->set_clipping_rect(x+5, y+5, 40, 40);
                 canvas->draw_image(x, y, 50, 50, test_image); x += 50;
                 canvas->cancel_clipping();
@@ -162,7 +163,7 @@ namespace gpc {
             Canvas *canvas;
             typename Canvas::font_handle_t font;
             typename Canvas::image_handle_t test_image;
-            typename Canvas::native_color_t red, green, blue, white;
+            typename Canvas::native_color_t red, green, blue, white, grey;
         };
 
     } // ns gui
