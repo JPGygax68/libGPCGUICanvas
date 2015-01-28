@@ -14,6 +14,8 @@ namespace gpc {
         };
 
         struct RGBAFloat {
+            static const RGBAFloat BLACK() { return { 0, 0, 0, 1 }; }
+            static const RGBAFloat WHITE() { return { 1, 1, 1, 1 }; }
             GLfloat r, g, b, a;
             RGBAFloat(): RGBAFloat { 0, 0, 0, 1 } {}
             RGBAFloat(GLfloat r_, GLfloat g_, GLfloat b_, GLfloat a_ = 1): r(r_), g(g_), b(b_), a(a_) {}
