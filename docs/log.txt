@@ -1,0 +1,14 @@
+2014-12-29
+==========
+
+Now that I have a first implementation of the GPC GUI Canvas concept (for OpenGL 4.3), it's time to think about the next steps.
+
+First, it seems clear now that I made a slight mistake when I renamed the "Painter" concept to "Canvas". There is a difference between these two concepts: the former is/was an interface towards the graphics backend, while the latter is an interface towards user code wanting to paint. There is a gap between the two because a Canvas should offer some facilities that are not backend-specific, particularly for text/font-related tasks such as determining the bounding box of a given text item.
+
+Therefore, it makes sense to divide the rendering engine into a front- and a backend. Though, thinking about it, "Painter" is probably not the best choice for the backend. In the end, using something like "CanvasBackend" might be clearer.
+
+Next, there is a need to check CanvasBackend implementations, both formally and functionally. The Boost Concept Checking Library can help with the formal side (the corresponding checking class could be used, for example, within the frontend class declaration). 
+
+Functional checking can be achieved by improving the current test application, and making it an optional component of GPC GUI Canvas that takes an implementation of CanvasBackend for parameter. 
+
+The test application should be made interactive, presenting to the user a series of windows, introduced by some explanatory text, and asking the user yes/no questions about what he saw (auto-close the windows after 5 seconds).
