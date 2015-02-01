@@ -8,13 +8,13 @@ namespace gpc {
 
         /** This is a Concept. Do not use directly.
         
-            A Pixel Canvas is a Canvas that is based on pixels. While practically
+            A Pixel Renderer is a Renderer that is based on pixels. While practically
             any type of display today is arguably based on pixels, a distinction
             can be made between displays where individual pixels can still be made 
-            out (such as most current computer monitors), and displays where pixels
-            no longer need to be considered individually. The latter could be the case 
-            for actual so-called "retina" displays, but also for display pipelines
-            that use anti-aliasing to hide individual pixels.
+            out by the naked eye (which at the time of writing is most computer monitors), 
+            and displays where they cannot. The latter could be the case for so-called 
+            "retina" displays, but also for display pipelines that use anti-aliasing to 
+            hide individual pixels.
 
             The basic idea is to use the specialized concept of a Pixel Canvas for
             those displays that need to do any kind of "grid fitting", making it 
@@ -25,7 +25,7 @@ namespace gpc {
             VerticalDirection VertAxisDir,
             typename CoordType // TODO: must be a signed integral type
         >
-        class PixelCanvas: public Canvas<VertAxisDir, CoordType> {
+        class PixelRenderer: public Renderer<VertAxisDir, CoordType> {
         public:
             
             struct _RGB24 {

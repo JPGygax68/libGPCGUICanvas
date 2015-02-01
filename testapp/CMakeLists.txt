@@ -1,13 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_library(libGPCGUICanvasTestsuite STATIC dummy.cpp include/gpc/gui/canvas_testsuite.hpp include/gpc/gui/fonts.hpp)
+add_executable(TestApp main.cpp)
 
-target_link_libraries(libGPCGUICanvasTestsuite PRIVATE libGPCGUICanvas)
-
-target_include_directories(libGPCGUICanvasTestsuite PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
+target_link_libraries(TestApp PRIVATE libGPCGUIGLRenderer)
 
 # Embed a font
 
@@ -30,9 +25,9 @@ add_custom_command(
   COMMAND GPCBin2C --input=${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft --output=${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft.h
 )
 
-target_sources(libGPCGUICanvasTestsuite PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft.h)
+target_sources(TestApp PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-20.rft.h)
 
-target_include_directories(libGPCGUICanvasTestsuite PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(TestApp PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # We need SDL2
 
@@ -57,7 +52,7 @@ endif()
 add_library(SDL2_MAIN STATIC IMPORTED)
 set_target_properties(SDL2_MAIN PROPERTIES IMPORTED_LOCATION ${SDL2_MAIN_LIB})
 
-target_link_libraries(libGPCGUICanvasTestsuite PRIVATE SDL2 SDL2_MAIN)
+target_link_libraries(TestApp PRIVATE SDL2 SDL2_MAIN)
 
 find_library(SDL2_IMAGE_LIB SDL2_image)
 if (NOT SDL2_IMAGE_LIB) 
@@ -67,18 +62,19 @@ endif()
 add_library(SDL2_IMAGE STATIC IMPORTED)
 set_target_properties(SDL2_IMAGE PROPERTIES IMPORTED_LOCATION ${SDL2_IMAGE_LIB})
 
-target_link_libraries(libGPCGUICanvasTestsuite PRIVATE SDL2_IMAGE)
+target_link_libraries(TestApp PRIVATE SDL2_IMAGE)
 
-# Boost Concept Checking Library
+# OpenGL
 
-set(Boost_USE_STATIC_LIBS        ON) # only find static libs
-set(Boost_USE_MULTITHREADED      ON)
-set(Boost_USE_STATIC_RUNTIME     ON)
-find_package(Boost REQUIRED)
-target_include_directories(libGPCGUICanvasTestsuite PUBLIC ${Boost_INCLUDE_DIRS})
+find_package(OpenGL REQUIRED)
+target_link_libraries(TestApp PRIVATE ${OPENGL_LIBRARIES})
+target_include_directories(TestApp PRIVATE ${OPENGL_INCLUDE_DIR})
+
+find_package(libGPCGLWrappers REQUIRED)
+target_link_libraries(TestApp PRIVATE libGPCGLWrappers)
 
 # GPC Fonts
 
 find_package(libGPCFonts REQUIRED)
 #target_include_directories(TestApp PRIVATE libGPCFonts)
-target_link_libraries(libGPCGUICanvasTestsuite PRIVATE libGPCFonts)
+target_link_libraries(TestApp PRIVATE libGPCFonts)
