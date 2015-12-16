@@ -1,3 +1,8 @@
+2015-12-15
+==========
+
+- TODO: enforce a rule that says that the conversion from rgb/rgba (floating point) to native color specifiers must always be doable at compile time (constexpr).
+
 2015-01-07
 ==========
 

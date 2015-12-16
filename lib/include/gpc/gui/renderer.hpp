@@ -4,37 +4,37 @@ namespace gpc {
 
     namespace gui {
 
-        enum class HorizontalDirection { RIGHT, LEFT };
-        enum class VerticalDirection { DOWN, UP };
+        enum class horizontal_direction { right, left };
+        enum class vertical_direction { down, up };
 
         // TODO: the color stuff should probably go into a separate header file
 
-        struct RGBFloat {
-            GLfloat r, g, b;
+        struct rgb {
+            float r, g, b;
         };
 
-        struct RGBAFloat {
-            static const RGBAFloat BLACK() { return { 0, 0, 0, 1 }; }
-            static const RGBAFloat WHITE() { return { 1, 1, 1, 1 }; }
-            GLfloat r, g, b, a;
-            RGBAFloat(): RGBAFloat { 0, 0, 0, 1 } {}
-            RGBAFloat(GLfloat r_, GLfloat g_, GLfloat b_, GLfloat a_ = 1): r(r_), g(g_), b(b_), a(a_) {}
-            auto operator / (float dsor) -> RGBAFloat & {
+        struct rgba {
+            static rgba black() { return { 0, 0, 0, 1 }; }
+            static rgba white() { return { 1, 1, 1, 1 }; }
+            float r, g, b, a;
+            rgba(): rgba { 0, 0, 0, 1 } {}
+            rgba(float r_, float g_, float b_, float a_ = 1): r(r_), g(g_), b(b_), a(a_) {}
+            auto operator /= (float dsor) -> rgba & {
                 r /= dsor, g /= dsor, b /= dsor, a /= dsor;
                 return *this;
             }
         };
 
         inline auto 
-        operator + (const RGBAFloat &color1, const RGBAFloat &color2) -> RGBAFloat 
+        operator + (const rgba &color1, const rgba &color2) -> rgba 
         {
             return { color1.r + color2.r, color1.g + color2.g, color1.b + color2.b, color1.a + color2.a };
         }
 
         inline auto
-        interpolate(const RGBAFloat &color1, const RGBAFloat &color2, float a) -> RGBAFloat 
+        interpolate(const rgba &color1, const rgba &color2, float a) -> rgba 
         {
-            RGBAFloat result;
+            rgba result;
             result.r = color1.r + a * (color2.r - color1.r);
             result.g = color1.g + a * (color2.g - color1.g);
             result.b = color1.b + a * (color2.b - color1.b);
@@ -42,12 +42,12 @@ namespace gpc {
             return result;
         }
 
-        struct RGBA32 {
+        struct rgba32 {
             uint8_t components[4];
         };
 
-        inline auto 
-        fromFloat(const RGBAFloat &from) -> RGBA32 
+        inline constexpr auto 
+        from_float(const rgba &from) -> rgba32
         {
             return { { uint8_t(from.r * 255), uint8_t(from.g * 255), uint8_t(from.b * 255), uint8_t(from.a * 255) } };
         }
@@ -67,29 +67,29 @@ namespace gpc {
         class Renderer {
         public:
             
-            static const HorizontalDirection    horizontal_axis_dir;
-            static const VerticalDirection      vertical_axis_dir;
+            static const horizontal_direction   horizontal_axis_dir;
+            static const vertical_direction     vertical_axis_dir;
             
-            typename CoordType coord_t;
-            typename std::make_unsigned<CoordType>  length_t;
+            using coord_t = CoordType;
+            using length_t = std::make_unsigned<coord_t>;
             
-            struct Point {
-                position_t x, y;
+            struct point {
+                coord_t x, y;
             };
             
-            struct Extents {
+            struct extents {
                 length_t w, h;
             };
             
-            struct Rect {
-                Point position;
-                Size size;
+            struct rect {
+                point   position;
+                extents size;
             };
             
-            struct Color {
-                static Color BLACK();
-                static Color WHITE();
-                static Color fromNormalizedRGBA(const float *rgba);
+            struct color {
+                static constexpr color black();
+                static constexpr color while();
+                static constexpr from_normalized_rgba(const float *rgba);
             };
 
             /** This method must clear the whole canvas, i.e. set it to the specified
