@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake ${CMAKE_MODULE_PATH})
+
 add_executable(TestApp main.cpp)
 
 target_link_libraries(TestApp PRIVATE libGPCGUIGLRenderer)

@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_library(libGPCGUITestImage STATIC dummy.cpp include/gpc/gui/test_image_gen.hpp)
+add_library(libGPCGUITestImage STATIC test_image_gen.cpp include/gpc/gui/test_image_gen.hpp)
 
-target_link_libraries(libGPCGUITestImage PRIVATE libGPCGUICanvas)
+# 2016-01-16: Obsolete, or just renamed ?
+# target_link_libraries(libGPCGUITestImage PRIVATE libGPCGUICanvas)
 
 target_include_directories(libGPCGUITestImage PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -33,6 +34,12 @@ add_custom_command(
 target_sources(libGPCGUITestImage PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular-16.rft.h)
 
 target_include_directories(libGPCGUITestImage PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+# Link GPC GUI Renderer (need to pull in definitions)
+if (NOT TARGET libGPCGUIRenderer)
+    message(FATAL_ERROR "Dependency libGPCGUIRenderer not defined as a target")
+endif()
+target_link_libraries(libGPCGUITestImage PUBLIC libGPCGUIRenderer)
 
 # We need SDL2
 
