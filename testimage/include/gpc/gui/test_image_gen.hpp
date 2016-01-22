@@ -63,9 +63,9 @@ namespace gpc {
         private:
 
             static auto
-            makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<rgba, 4> &corner_colors) -> std::vector<rgba>
+            makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<rgba, 4> &corner_colors) -> std::vector<rgba32>
             {
-                std::vector<rgba> image(width * height);
+                std::vector<rgba32> image(width * height);
 
                 auto it = image.begin();
                 for (auto y = 0U; y < height; y++) {
@@ -73,9 +73,11 @@ namespace gpc {
                         rgba top    = interpolate(corner_colors[0], corner_colors[1], float(x) / float(width));
                         rgba bottom = interpolate(corner_colors[2], corner_colors[3], float(x) / float(width));
                         rgba color  = interpolate(top, bottom, float(y) / float(height));
-                        //*it = rgba32{ static_cast<uint8_t>(255 * color.r), static_cast<uint8_t>(255 * color.g), static_cast<uint8_t>(255 * color.b), 255 };
-                        *it = color;
-                        //*it = { {255, 0, 0, 255} };
+                        *it = rgba32 { 
+                            static_cast<uint8_t>(255 * color.r()), 
+                            static_cast<uint8_t>(255 * color.g()), 
+                            static_cast<uint8_t>(255 * color.b()), 
+                            255 };
                         it++;
                     }
                 }
@@ -85,11 +87,11 @@ namespace gpc {
 
             void register_colors()
             {
-               red = renderer->rgba_to_native({ 1, 0, 0, 1 });
+               red   = renderer->rgba_to_native({ 1, 0, 0, 1 });
                green = renderer->rgba_to_native({ 0, 1, 0, 1 });
-               blue = renderer->rgba_to_native({ 0, 0, 1, 1 });
+               blue  = renderer->rgba_to_native({ 0, 0, 1, 1 });
                white = renderer->rgba_to_native({ 1, 1, 1, 1 });
-               grey = renderer->rgba_to_native({ 0.5f, 0.5f, 0.5f, 1});
+               grey  = renderer->rgba_to_native({ 0.5f, 0.5f, 0.5f, 1});
             }
 
             void register_fonts()
@@ -112,7 +114,7 @@ namespace gpc {
             void register_test_image()
             {
                 auto pixels = makeColorInterpolatedRectangle(50, 50, { { { 1, 0, 0, 1 }, { 0, 1, 0, 1 }, { 0, 0, 1, 1 }, { 1, 1, 1, 1 } } });
-                test_image = renderer->register_rgba_image(50, 50, &pixels[0]);
+                test_image = renderer->register_rgba32_image(50, 50, &pixels[0]);
             }
 
             void draw_grid()
