@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 namespace gpc {
 
     namespace gui {
@@ -9,18 +11,19 @@ namespace gpc {
 
         // TODO: the color stuff should probably go into a separate header file
 
-        /* struct rgb {
-            float r, g, b;
-        }; */
+        /** Normalized RGBA (red, green, blue, alpha) color.
+         */
+        struct rgba_norm {
 
-        struct rgba {
-            static rgba black() { return { 0, 0, 0, 1 }; }
-            static rgba white() { return { 1, 1, 1, 1 }; }
-            float components[4];
-            rgba(): rgba { 0, 0, 0, 1 } {}
-            rgba(float r, float g, float b, float a = 1) { 
-                components[0] = r, components[1] = g, components[2] = b, components[3] = a; 
-            }
+            // Predefined colors
+            static constexpr const rgba_norm black() { return { 0, 0, 0, 1 }; }
+            static constexpr const rgba_norm white() { return { 1, 1, 1, 1 }; }
+
+            // Constructors
+            constexpr rgba_norm(): rgba_norm { 0, 0, 0, 1 } {}
+            constexpr rgba_norm(float r, float g, float b, float a = 1): components { r, g, b, a } {}
+
+            // Accessors
             constexpr float r() const { return components[0]; }
             constexpr float g() const { return components[1]; }
             constexpr float b() const { return components[2]; }
@@ -29,23 +32,29 @@ namespace gpc {
             float& g() { return components[1];  }
             float& b() { return components[2]; }
             float& a() { return components[3]; }
-            constexpr operator const float * () const { return components; }
-            auto operator /= (float dsor) -> rgba & {
-                components[0] /= dsor, components[1]/= dsor, components[2] /= dsor, components[3] /= dsor;
+            // Not really an accessor, but allows usage in calls to OpenGL
+            constexpr operator const float * () const { return &components[0]; }
+
+            // Operations
+            auto operator /= (float dsor) -> rgba_norm & {
+                components[0] /= dsor, components[1] /= dsor, components[2] /= dsor, components[3] /= dsor;
                 return *this;
             }
+
+            // Data
+            std::array<float, 4> components;
         };
 
         inline auto 
-        operator + (const rgba &color1, const rgba &color2) -> rgba 
+        operator + (const rgba_norm &color1, const rgba_norm &color2) -> rgba_norm 
         {
             return { color1.r() + color2.r(), color1.g() + color2.g(), color1.b() + color2.b(), color1.a() + color2.a() };
         }
 
         inline auto
-        interpolate(const rgba &color1, const rgba &color2, float a) -> rgba 
+        interpolate(const rgba_norm &color1, const rgba_norm &color2, float a) -> rgba_norm 
         {
-            rgba result;
+            rgba_norm result;
             result.r() = color1.r() + a * (color2.r() - color1.r());
             result.g() = color1.g() + a * (color2.g() - color1.g());
             result.b() = color1.b() + a * (color2.b() - color1.b());
@@ -58,7 +67,7 @@ namespace gpc {
         };
 
         inline constexpr auto 
-        from_float(const rgba &from) -> rgba32
+        from_float(const rgba_norm &from) -> rgba32
         {
             return { { uint8_t(from.r() * 255), uint8_t(from.g() * 255), uint8_t(from.b() * 255), uint8_t(from.a() * 255) } };
         }
@@ -100,7 +109,7 @@ namespace gpc {
             struct color {
                 static constexpr color black();
                 static constexpr color while();
-                static constexpr from_normalized_rgba(const float *rgba);
+                static constexpr from_normalized_rgba(const float *rgba_norm);
             };
 
             /** This method must clear the whole canvas, i.e. set it to the specified

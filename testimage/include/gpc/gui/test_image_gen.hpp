@@ -46,11 +46,11 @@ namespace gpc {
                 register_test_image();
             }
 
-            auto generate() -> std::vector<rgba>
+            auto generate() -> std::vector<rgba_norm>
             {
-                std::vector<rgba> img;
+                std::vector<rgba_norm> img;
 
-                renderer->clear(renderer->rgba_to_native({ 0.8f, 0.8f, 0.8f, 0 }));
+                renderer->clear(renderer->rgba_norm_to_native({ 0.8f, 0.8f, 0.8f, 0 }));
 
                 draw_grid();
                 draw_plain_rects();
@@ -63,16 +63,16 @@ namespace gpc {
         private:
 
             static auto
-            makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<rgba, 4> &corner_colors) -> std::vector<rgba32>
+            makeColorInterpolatedRectangle(size_t width, size_t height, const std::array<rgba_norm, 4> &corner_colors) -> std::vector<rgba32>
             {
                 std::vector<rgba32> image(width * height);
 
                 auto it = image.begin();
                 for (auto y = 0U; y < height; y++) {
                     for (auto x = 0U; x < width; x++) {
-                        rgba top    = interpolate(corner_colors[0], corner_colors[1], float(x) / float(width));
-                        rgba bottom = interpolate(corner_colors[2], corner_colors[3], float(x) / float(width));
-                        rgba color  = interpolate(top, bottom, float(y) / float(height));
+                        rgba_norm top    = interpolate(corner_colors[0], corner_colors[1], float(x) / float(width));
+                        rgba_norm bottom = interpolate(corner_colors[2], corner_colors[3], float(x) / float(width));
+                        rgba_norm color  = interpolate(top, bottom, float(y) / float(height));
                         *it = rgba32 { 
                             static_cast<uint8_t>(255 * color.r()), 
                             static_cast<uint8_t>(255 * color.g()), 
@@ -87,11 +87,11 @@ namespace gpc {
 
             void register_colors()
             {
-               red   = renderer->rgba_to_native({ 1, 0, 0, 1 });
-               green = renderer->rgba_to_native({ 0, 1, 0, 1 });
-               blue  = renderer->rgba_to_native({ 0, 0, 1, 1 });
-               white = renderer->rgba_to_native({ 1, 1, 1, 1 });
-               grey  = renderer->rgba_to_native({ 0.5f, 0.5f, 0.5f, 1});
+               red   = renderer->rgba_norm_to_native({ 1, 0, 0, 1 });
+               green = renderer->rgba_norm_to_native({ 0, 1, 0, 1 });
+               blue  = renderer->rgba_norm_to_native({ 0, 0, 1, 1 });
+               white = renderer->rgba_norm_to_native({ 1, 1, 1, 1 });
+               grey  = renderer->rgba_norm_to_native({ 0.5f, 0.5f, 0.5f, 1});
             }
 
             void register_fonts()
@@ -121,8 +121,8 @@ namespace gpc {
             {
                 static const int LINE_WIDTH = 1;
 
-                Renderer::native_color before = renderer->rgba_to_native({0, 0, 0, 1});
-                Renderer::native_color after = renderer->rgba_to_native({1, 1, 1, 1});
+                Renderer::native_color before = renderer->rgba_norm_to_native({0, 0, 0, 1});
+                Renderer::native_color after  = renderer->rgba_norm_to_native({1, 1, 1, 1});
 
                 // Vertical axis
                 for (int y = 0; y <= HEIGHT; y += 50) {
@@ -170,11 +170,11 @@ namespace gpc {
             {
                 static const int SEP = 25;
 
-                renderer->set_text_color(renderer->rgba_to_native({0, 0, 0, 1}));
+                renderer->set_text_color(renderer->rgba_norm_to_native({0, 0, 0, 1}));
                 renderer->render_text(font, x, y, U"Some black text.", 16); x += 200;
-                renderer->set_text_color(renderer->rgba_to_native({ 0.5f, 0, 0, 1 }));
+                renderer->set_text_color(renderer->rgba_norm_to_native({ 0.5f, 0, 0, 1 }));
                 renderer->render_text(font, x, y, U"Now some RED text.", 18); x += 200;
-                renderer->set_text_color(renderer->rgba_to_native({ 0., 0, 0, 0.5f }));
+                renderer->set_text_color(renderer->rgba_norm_to_native({ 0., 0, 0, 0.5f }));
                 renderer->render_text(font, x, y, U"Half-transparent text.", 21); x += 200;
             }
 
