@@ -12,6 +12,8 @@ namespace gpc {
         // TODO: the color stuff should probably go into a separate header file
 
         /** Normalized RGBA (red, green, blue, alpha) color.
+        
+            TODO: add a monochrome pixel type ?
          */
         struct rgba_norm {
 
