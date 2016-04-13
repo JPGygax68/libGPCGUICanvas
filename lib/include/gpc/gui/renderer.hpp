@@ -12,8 +12,6 @@ namespace gpc {
         // TODO: the color stuff should probably go into a separate header file
 
         /** Normalized RGBA (red, green, blue, alpha) color.
-        
-            TODO: add a monochrome pixel type ?
          */
         struct rgba_norm {
 
@@ -73,6 +71,12 @@ namespace gpc {
         {
             return { { uint8_t(from.r() * 255), uint8_t(from.g() * 255), uint8_t(from.b() * 255), uint8_t(from.a() * 255) } };
         }
+
+        /* Normalized mono (greyscale) value.
+         */
+        using mono_norm = float;
+        
+        using mono8 = uint8_t;
 
         // TODO: use Boost concept checking to define something usable here
 
